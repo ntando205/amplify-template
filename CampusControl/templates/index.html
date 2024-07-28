@@ -1,0 +1,106 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load pwa %}
+    {% progressive_web_app_meta %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crime Reporting App</title>
+    <link rel="stylesheet" href="{% static 'css/home.css' %}">
+</head>
+<body>
+
+<div class="container">
+    <h1>Campus Control</h1>
+    <form action="" method="post">
+    <button type="submit"  class="button panic-button" id="panic" activatePanic()">Panic Button</button>
+</form>
+</div>
+<div class="container">
+    <h3>File a report</h3>
+    <form>
+        <label for="crimeType">Type of Crime:</label>
+        <select id="crimeType" name="crimeType">
+            <option value="theft">Theft</option>
+            <option value="assault">Assault</option>
+            <option value="burglary">Burglary</option>
+            <option value="vandalism">Vandalism</option>
+            <option value="other">Other</option>
+        </select>
+
+        <label for="description">Description:</label>
+        <textarea id="description" name="description" rows="5"></textarea>
+
+        <label for="location">Location:</label>
+        <input type="text" id="location" name="location">
+
+        <label for="date">Date and Time:</label>
+        <input type="datetime-local" id="date" name="date">
+
+        <button type="submit" class="button">Submit Report</button>
+    </form>
+
+    
+</div>
+
+<script>
+    document.getElementById('get-ip-btn').addEventListener('click', function() {
+        getLocalIP(function(ip) {
+            document.getElementById('ip-address').textContent = 'Local IP: ' + ip;
+            sendIPToDjango(ip);
+        });
+    });
+
+    function getLocalIP(callback) {
+        var peerConnection = new RTCPeerConnection({ iceServers: [] });
+        peerConnection.createDataChannel('');
+        peerConnection.createOffer(function(offer) {
+            peerConnection.setLocalDescription(offer);
+        }, function(error) { console.error(error); });
+
+        peerConnection.onicecandidate = function(event) {
+            if (event.candidate && event.candidate.candidate) {
+                var candidate = event.candidate.candidate;
+                var localIP = candidate.split(' ')[4];
+                callback(localIP);
+                peerConnection.onicecandidate = null;
+            }
+        };
+    }
+
+    function sendIPToDjango(ip) {
+        const requestBody = JSON.stringify({ ip: ip });
+    console.log('Request Body:', requestBody);
+
+    fetch('/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: requestBody
+    })
+    .then(response => response.json())
+    .then(data => console.log('Success:', data))
+    .catch(error => console.error('Error:', error));
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+
+</body>
+</html>
